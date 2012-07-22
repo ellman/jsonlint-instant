@@ -108,7 +108,13 @@ jsl.interactions = (function () {
             jsonVal,
             result;
             
+        
         jsonVal = $('#json_input').val();
+
+        //save the json_input before re validation and format
+        var preFormat = jsonVal;
+        //save the position of last entered Char before formatting
+        var preCharPos = $('#json_input').caret().begin;
 
         try {
             result = jsl.parser.parse(jsonVal);
@@ -125,6 +131,7 @@ jsl.interactions = (function () {
                 if (compress) {
                     $('#json_input').val(JSON.stringify(JSON.parse(jsonVal), null, ""));
                 }
+                
             } else {
                 alert("An unknown error occurred. Please contact Arc90.");
             }
@@ -141,33 +148,20 @@ jsl.interactions = (function () {
                     $('#json_input').val(jsonVal);
                     result = jsl.parser.parse($('#json_input').val());
                 }
+              
             } catch(e) {
                 parseException = e;
             }
 
-            lineMatches = parseException.message.match(/line ([0-9]*)/);
-            if (lineMatches && typeof lineMatches === "object" && lineMatches.length > 1) {
-                lineNum = parseInt(lineMatches[1], 10);
-
-                if (lineNum === 1) {
-                    lineStart = 0;
-                } else {
-                    lineStart = getNthPos(jsonVal, "\n", lineNum - 1);
-                }
-
-                lineEnd = jsonVal.indexOf("\n", lineStart);
-                if (lineEnd < 0) {
-                    lineEnd = jsonVal.length;
-                }
-
-                $('#json_input').focus().caret(lineStart, lineEnd);
-            }
-
             $('#results').text(parseException.message);
-
             $('#results').removeClass('success').addClass('error');
-            $('div.linedwrap').removeClass('greenBorder').addClass('redBorder');
+            $('div.linedwrap').removeClass('greenBorder');
         }
+
+        var preFormatLastChar = preFormat.substring(preCharPos-1,preCharPos);
+        var postFormat = $('#json_input').val();
+        var newCursorPos = postFormat.indexOf(preFormatLastChar, preCharPos-1);
+        if (newCursorPos > 0)  $('#json_input').focus().caret(newCursorPos+1, newCursorPos+1);
 
         $('#loadSpinner').hide();
     }
@@ -190,29 +184,13 @@ jsl.interactions = (function () {
         if (!reformat) {
             $('#headerText').html('JSONLint<span class="light">Lite</span>');
         }
-
-        $('#validate').click(function () {
-            $('#results_header, #loadSpinner').show();
-
-            var jsonVal = $.trim($('#json_input').val());
-
-            if (jsonVal.substring(0, 4).toLowerCase() === "http") {
-                $.post("proxy.php", {"url": jsonVal}, function (responseObj) {
-                    $('#json_input').val(responseObj.content);
-                    validate();
-                }, 'json');
-            } else {
-                validate();
-            }
-
-            return false;
-        });
-        
+    
         $('#json_input').keyup(function () {
-            $('div.linedwrap').removeClass('greenBorder').removeClass('redBorder');
+            validate();
         }).linedtextarea({
             selectedClass: 'lineselect'
         }).focus();
+
 
         $('#reset').click(function () {
             $('#json_input').val('').focus();
