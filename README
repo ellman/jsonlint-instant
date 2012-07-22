@@ -1,0 +1,7 @@
+BH
+
+This is a clone from the excellend https://github.com/umbrae/jsonlintdotcom
+
+There are some very minor changes I made to allow "live/instant" validation.
+
+All of the changes are in the jsl.interactions file and are basicaly just jquery.
